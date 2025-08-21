@@ -1,0 +1,40 @@
+# ~/zapty-project/docker-compose.yml
+version: '3.8'
+
+services:
+  # Serviço do Banco de Dados
+  database:
+    image: postgres:15-alpine
+    container_name: zapty_db
+    restart: always
+    environment:
+      POSTGRES_USER: zapty_user
+      POSTGRES_PASSWORD: 'supersecret123' # Use uma senha forte de verdade!
+      POSTGRES_DB: zapty_db
+      POSTGRES_INITDB_ARGS: "--auth-host=md5" # <--- MUITO IMPORTANTE PARA AUTENTICAÇÃO
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # Serviço da API (NestJS)
+  api:
+    build:
+      context: . # <--- AGORA O CONTEXTO É A PASTA RAIZ DO NOVO PROJETO
+      dockerfile: Dockerfile
+    container_name: zapty_api
+    restart: always
+    ports:
+      - "3000:3000"
+    depends_on:
+      - database
+    environment:
+      DATABASE_HOST: database
+      DATABASE_USER: zapty_user
+      DATABASE_PASSWORD: 'supersecret123' # Use a mesma senha definida acima
+      DATABASE_NAME: zapty_db
+      DATABASE_PORT: 5432
+
+# Seção de Volumes
+volumes:
+  postgres_data:
